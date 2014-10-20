@@ -1,0 +1,1 @@
+java -client -cp "../lib/*:../etc/" -Dlogback.configurationFile=file:../etc/logback.xml org.springframework.batch.core.launch.support.CommandLineJobRunner spider-jobs/spidersMonthJob.xml spidersMonthJob year=$1 month=$2

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+        
+<hibernate-mapping package="com.ovi.events.spider.model.theatre">
+    <class name="EventSchedule" table="th_event_schedule">
+         <id 
+            name="id"
+            type="java.lang.Long"
+            unsaved-value="-1">
+            <generator class="native"/>
+        </id>
+        <many-to-one 
+            name="event" 
+            class="Event" 
+            fetch="select"
+            column="event_id"
+            not-null="true" />
+        
+        <property name="timestamp" not-null="false"/>
+    </class>
+</hibernate-mapping>

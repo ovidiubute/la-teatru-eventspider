@@ -1,0 +1,163 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd">
+
+	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="eventspider.properties"></property>
+		<property name="ignoreUnresolvablePlaceholders" value="false" />
+	</bean>
+
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="url" value="jdbc:mysql://${ServiceHost}:${ServicePort}/${ServiceDatabase}${ServiceExtraParameters}" />
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="username" value="${ServiceUsername}" />
+		<property name="password" value="${ServicePassword}" />
+	</bean>
+	
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+	  <property name="mappingResources">
+	    <list>
+	      <value>hbmapping/theatre/Event.hbm.xml</value>
+	      <value>hbmapping/theatre/Venue.hbm.xml</value>
+	      <value>hbmapping/theatre/City.hbm.xml</value>
+	      <value>hbmapping/theatre/EventSchedule.hbm.xml</value>
+	    </list>
+	  </property>
+	  <property name="hibernateProperties">
+	    <props>
+	      <!-- Configuration pool via c3p0--> 
+          <prop key="hibernate.c3p0.acquire_increment">1</prop> 
+          <prop key="hibernate.c3p0.idle_test_period">100</prop> <!-- seconds --> 
+          <prop key="hibernate.c3p0.max_size">100</prop> 
+          <prop key="hibernate.c3p0.max_statements">0</prop> 
+          <prop key="hibernate.c3p0.min_size">10</prop> 
+          <prop key="hibernate.c3p0.timeout">100</prop> <!-- seconds --> 
+          <prop key="hibernate.dialect">org.hibernate.dialect.HSQLDialect</prop>
+          <!-- Enable Hibernate's automatic session context management -->
+          <prop key="hibernate.current_session_context_class">thread</prop>
+          <prop key="hibernate.show_sql">false</prop>
+          <!-- Disable the second-level cache  -->
+          <prop key="hibernate.cache.provider_class">org.hibernate.cache.NoCacheProvider</prop>
+	    </props>
+	  </property>
+	  <property name="dataSource">
+	    <ref bean="dataSource"/>
+	  </property>
+	</bean>
+	
+	<!-- Pass the session factory to our VenueDAO -->
+    <bean id="venueDAOTarget" class="com.ovi.events.spider.theatre.dao.impl.VenueDAOImpl">
+        <property name="sessionFactory">
+            <ref local="sessionFactory"/>
+        </property>
+    </bean>
+    
+    <!-- Pass the session factory to CityDAO -->
+    <bean id="cityDAOTarget" class="com.ovi.events.spider.theatre.dao.impl.CityDAOImpl">
+        <property name="sessionFactory">
+            <ref local="sessionFactory"/>
+        </property>
+    </bean>
+    
+    <!-- Pass the session factory to EventDAO -->
+    <bean id="eventDAOTarget" class="com.ovi.events.spider.theatre.dao.impl.EventDAOImpl">
+        <property name="sessionFactory">
+            <ref local="sessionFactory"/>
+        </property>
+    </bean>
+    
+    <!-- Pass the session factory to EventScheduleDAO -->
+    <bean id="eventScheduleDAOTarget" class="com.ovi.events.spider.theatre.dao.impl.EventScheduleDAOImpl">
+        <property name="sessionFactory">
+            <ref local="sessionFactory"/>
+        </property>
+    </bean>
+    
+    <bean id="venueDAO"
+      class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager"><ref local="transactionManager"/></property>
+        <property name="target"><ref local="venueDAOTarget"/></property>
+        <property name="transactionAttributes">
+            <props>
+                <prop key="addVenue">PROPAGATION_REQUIRED</prop>
+                <prop key="getVenue">PROPAGATION_REQUIRED</prop>
+                <prop key="findVenue">PROPAGATION_REQUIRED</prop>
+            </props>
+        </property>
+    </bean>
+    
+    <bean id="cityDAO"
+      class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager"><ref local="transactionManager"/></property>
+        <property name="target"><ref local="cityDAOTarget"/></property>
+        <property name="transactionAttributes">
+            <props>
+                <prop key="addCity">PROPAGATION_REQUIRED</prop>
+                <prop key="getCity">PROPAGATION_REQUIRED</prop>
+                <prop key="findCity">PROPAGATION_REQUIRED</prop>
+            </props>
+        </property>
+    </bean>
+    
+    <bean id="eventDAO"
+      class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager"><ref local="transactionManager"/></property>
+        <property name="target"><ref local="eventDAOTarget"/></property>
+        <property name="transactionAttributes">
+            <props>
+                <prop key="addEvent">PROPAGATION_REQUIRED</prop>
+                <prop key="getEvent">PROPAGATION_REQUIRED</prop>
+                <prop key="findEvent">PROPAGATION_REQUIRED</prop>
+            </props>
+        </property>
+    </bean>
+    
+    <bean id="eventScheduleDAO"
+      class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="transactionManager"><ref local="transactionManager"/></property>
+        <property name="target"><ref local="eventScheduleDAOTarget"/></property>
+        <property name="transactionAttributes">
+            <props>
+                <prop key="addEventSchedule">PROPAGATION_REQUIRED</prop>
+                <prop key="getEventSchedule">PROPAGATION_REQUIRED</prop>
+                <prop key="findEventSchedule">PROPAGATION_REQUIRED</prop>
+            </props>
+        </property>
+    </bean>
+
+	<bean id="jobLauncher"
+		class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+	</bean>
+
+	<bean id="jobRepository"
+		class="org.springframework.batch.core.repository.support.SimpleJobRepository">
+		<constructor-arg>
+			<bean
+				class="org.springframework.batch.core.repository.dao.MapJobInstanceDao" />
+		</constructor-arg>
+		<constructor-arg>
+			<bean
+				class="org.springframework.batch.core.repository.dao.MapJobExecutionDao" />
+		</constructor-arg>
+		<constructor-arg>
+			<bean
+				class="org.springframework.batch.core.repository.dao.MapStepExecutionDao" />
+		</constructor-arg>
+		<constructor-arg>
+			<bean
+				class="org.springframework.batch.core.repository.dao.MapExecutionContextDao" />
+		</constructor-arg>
+	</bean>
+
+	<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+       <property name="sessionFactory">
+           <ref bean="sessionFactory"/>
+       </property>
+    </bean>
+
+	<bean id="taskExecutor" class="org.springframework.core.task.SimpleAsyncTaskExecutor" />
+</beans>

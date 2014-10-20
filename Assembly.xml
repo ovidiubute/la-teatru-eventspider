@@ -1,0 +1,56 @@
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+	<id>delivery</id>
+
+	<formats>
+		<format>tar.gz</format>
+	</formats>
+
+	<!-- The tgz root will include the base dir -->
+	<includeBaseDirectory>true</includeBaseDirectory>
+
+	<fileSets>
+		<fileSet>
+			<lineEnding>unix</lineEnding>
+			<directory>src/main/resources</directory>
+			<fileMode>0700</fileMode>
+			<outputDirectory>etc</outputDirectory>
+			<includes>
+				<include>**</include>
+			</includes>
+			<excludes>
+			     <exclude>*.formatted</exclude>
+			</excludes>
+		</fileSet>
+		<fileSet>
+			<fileMode>0700</fileMode>
+			<directory>bin</directory>
+			<outputDirectory>bin</outputDirectory>
+			<includes>
+				<include>**</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+
+	<dependencySets>
+		<!-- Libs -->
+		<dependencySet>
+			<outputDirectory>lib/</outputDirectory>
+			<useProjectArtifact>true</useProjectArtifact>
+			<scope>runtime</scope>
+
+			<includes>
+				<include>*:*</include>
+			</includes>
+			<excludes>
+				<exclude>junit.*:*
+				</exclude>
+				<exclude>org.junit.*:*
+				</exclude>
+			</excludes>
+
+		</dependencySet>
+	</dependencySets>
+
+</assembly>
